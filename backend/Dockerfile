@@ -1,7 +1,7 @@
 # =========================
 # Stage 1: Dependencies
 # =========================
-FROM golang:1.26-alpine AS deps
+FROM golang:1.24-alpine AS deps
 
 WORKDIR /app
 
