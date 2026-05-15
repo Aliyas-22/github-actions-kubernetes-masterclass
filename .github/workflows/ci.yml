@@ -2,10 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - dev
+      - feat-*
+      - feature/*
+
     paths-ignore:
       - "k8s/**"
-      - "feat-*"
       - "docs/**"
       - "**/*.md"
 
