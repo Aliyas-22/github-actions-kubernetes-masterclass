@@ -1,32 +1,52 @@
+version: '3.9'
+
 services:
+
   db:
     image: mysql:8.4
+
     restart: unless-stopped
+
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
+
     ports:
       - "3306:3306"
+
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
     networks:
       - skillpulse
+
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
-    
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   backend:
     image: ${DOCKERHUB_USERNAME}/skillpulse-backend:latest
-    build: ./backend
+
+    build:
+      context: ./backend
+
     restart: unless-stopped
+
     networks:
       - skillpulse
+
     environment:
       DB_HOST: db
       DB_PORT: "3306"
@@ -34,21 +54,60 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       PORT: "8080"
-  
+
     depends_on:
       db:
         condition: service_healthy
 
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   frontend:
     image: ${DOCKERHUB_USERNAME}/skillpulse-frontend:latest
-    build: ./frontend
+
+    build:
+      context: ./frontend
+
     restart: unless-stopped
+
     networks:
       - skillpulse
+
     ports:
-      - "80:80"
+      - "80:8080"
+
     depends_on:
       - backend
+
+    read_only: true
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   mysql_data:

@@ -1,41 +1,97 @@
--- SkillPulse Database Schema
+-- =========================================
+-- SkillPulse Database Initialization
+-- =========================================
 
-CREATE DATABASE IF NOT EXISTS skillpulse;
+CREATE DATABASE IF NOT EXISTS skillpulse
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
 USE skillpulse;
 
+-- =========================================
+-- Skills Table
+-- =========================================
+
 CREATE TABLE IF NOT EXISTS skills (
+
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     name VARCHAR(100) NOT NULL,
+
     category VARCHAR(50) DEFAULT '',
+
     target_hours INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_skill_name (name),
+
+    INDEX idx_skill_category (category)
+
 );
+
+-- =========================================
+-- Learning Logs Table
+-- =========================================
 
 CREATE TABLE IF NOT EXISTS learning_logs (
+
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     skill_id INT NOT NULL,
+
     hours DECIMAL(4,1) NOT NULL,
+
     notes TEXT,
+
     log_date DATE NOT NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+
+    CONSTRAINT fk_skill
+        FOREIGN KEY (skill_id)
+        REFERENCES skills(id)
+        ON DELETE CASCADE,
+
+    INDEX idx_skill_id (skill_id),
+
+    INDEX idx_log_date (log_date)
+
 );
 
--- Seed data for demo
-INSERT INTO skills (name, category, target_hours) VALUES
+-- =========================================
+-- Seed Data
+-- =========================================
+
+INSERT INTO skills (name, category, target_hours)
+VALUES
     ('Docker', 'DevOps', 40),
     ('Kubernetes', 'DevOps', 60),
     ('Go', 'Programming', 50),
     ('Azure DevOps', 'Cloud', 30),
     ('Terraform', 'DevOps', 35);
 
-INSERT INTO learning_logs (skill_id, hours, notes, log_date) VALUES
+INSERT INTO learning_logs (
+    skill_id,
+    hours,
+    notes,
+    log_date
+)
+VALUES
     (1, 2.0, 'Learned Docker basics - images, containers, volumes', '2026-03-10'),
+
     (1, 1.5, 'Built multi-stage Dockerfile for Go app', '2026-03-12'),
+
     (1, 3.0, 'Docker Compose with multiple services', '2026-03-14'),
+
     (2, 1.0, 'Kubernetes architecture overview', '2026-03-11'),
+
     (2, 2.0, 'Deployed first pod and service', '2026-03-13'),
+
     (3, 2.5, 'Go basics - structs, interfaces, goroutines', '2026-03-10'),
+
     (3, 1.5, 'Built REST API with Gin framework', '2026-03-15'),
+
     (4, 1.0, 'Created Azure DevOps org and project', '2026-03-16'),
+
     (5, 1.5, 'Terraform basics - providers, resources, state', '2026-03-17');
