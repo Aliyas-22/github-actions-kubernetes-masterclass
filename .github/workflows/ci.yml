@@ -18,44 +18,42 @@ env:
 
 jobs:
 
-  # SECURITY STAGE (SAST + SECRETS)
+  # SECURITY STAGE (SAST + SECRETS + SCA)
   security:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      # Secret scanning
+      # Secret Scanning
       - name: Gitleaks Secret Scan
         uses: gitleaks/gitleaks-action@v2
 
-      # SAST - Semgrep (multi-language)
+      # SAST Scan (multi-language)
       - name: Semgrep SAST Scan
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/ci"
         continue-on-error: false
 
-      # Go-specific SAST
-      - name: Install Go
+      # Setup Go (FIXED VERSION)
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.26"
 
-      - name: Run govulncheck
+      # Go Dependency + Vuln Scan (SCA)
+      - name: Run Go Security Scan (govulncheck)
         working-directory: ./backend
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
-
-      # Go dependency vulnerability scan
-      - name: Run govulncheck
-        run: |
+          go mod tidy
+          go mod download
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
 
-  #  BACKEND BUILD + SCAN
+
+  # BACKEND BUILD + SCAN
   backend:
     needs: security
     runs-on: ubuntu-latest
@@ -82,7 +80,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Trivy container scan
+      # Trivy Scan Backend Image
       - name: Trivy Scan Backend
         uses: aquasecurity/trivy-action@master
         with:
@@ -92,8 +90,8 @@ jobs:
           ignore-unfixed: true
 
 
-  #  FRONTEND BUILD + SCAN
 
+  # FRONTEND BUILD + SCAN
   frontend:
     needs: security
     runs-on: ubuntu-latest
@@ -120,7 +118,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Trivy container scan
+      # Trivy Scan Frontend Image
       - name: Trivy Scan Frontend
         uses: aquasecurity/trivy-action@master
         with:
@@ -128,3 +126,4 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
           ignore-unfixed: true
+          
