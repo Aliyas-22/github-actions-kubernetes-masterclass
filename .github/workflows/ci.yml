@@ -18,42 +18,41 @@ env:
 
 jobs:
 
-  # SECURITY STAGE (SAST + SECRETS + SCA)
+  # SECURITY STAGE (SAST + SECRETS + SCA) 
   security:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      # Secret Scanning
+      # Secret scanning
       - name: Gitleaks Secret Scan
         uses: gitleaks/gitleaks-action@v2
 
-      # SAST Scan (multi-language)
+      # SAST Scan (Semgrep)
       - name: Semgrep SAST Scan
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/ci"
         continue-on-error: false
 
-      # Setup Go (FIXED VERSION)
+      # Setup Go (MATCHES YOUR PROJECT)
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.26"
 
-      # Go Dependency + Vuln Scan (SCA)
-      - name: Run Go Security Scan (govulncheck)
+      # Dependency + Vulnerability Scan (SCA)
+      - name: Go Dependency Security Scan (govulncheck)
         working-directory: ./backend
         run: |
-          go mod tidy
           go mod download
+          go mod verify
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
 
-
-  # BACKEND BUILD + SCAN
+  # BACKEND BUILD + IMAGE SCAN
   backend:
     needs: security
     runs-on: ubuntu-latest
@@ -68,7 +67,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build + Push Backend
       - name: Build and Push Backend
         uses: docker/build-push-action@v6
         with:
@@ -80,8 +78,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Trivy Scan Backend Image
-      - name: Trivy Scan Backend
+      - name: Trivy Scan Backend Image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/skillpulse-backend:latest
@@ -91,7 +88,7 @@ jobs:
 
 
 
-  # FRONTEND BUILD + SCAN
+  # FRONTEND BUILD + IMAGE SCAN
   frontend:
     needs: security
     runs-on: ubuntu-latest
@@ -106,7 +103,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build + Push Frontend
       - name: Build and Push Frontend
         uses: docker/build-push-action@v6
         with:
@@ -118,12 +114,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Trivy Scan Frontend Image
-      - name: Trivy Scan Frontend
+      - name: Trivy Scan Frontend Image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/skillpulse-frontend:latest
           severity: HIGH,CRITICAL
           exit-code: 1
           ignore-unfixed: true
-          
