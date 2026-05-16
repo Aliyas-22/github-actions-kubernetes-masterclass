@@ -11,7 +11,7 @@ spec:
   selector:
     app: backend
   ports:
-    - name: http
+    - name: http-metrics        # ServiceMonitor uses this name
       port: 8080
       targetPort: 8080
 ---
@@ -21,7 +21,7 @@ metadata:
   name: backend
   namespace: skillpulse
 spec:
-  replicas: 1
+  replicas: 1                   # HPA will scale this to 2-4
   selector:
     matchLabels:
       app: backend
@@ -33,7 +33,7 @@ spec:
       containers:
         - name: backend
           image: aliyafirdous22/skillpulse-backend
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always   # always pull new SHA from DockerHub
           ports:
             - name: http
               containerPort: 8080

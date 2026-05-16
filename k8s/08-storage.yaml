@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────
+# StorageClass — EBS gp3 dynamic provisioning
+# EKS EBS CSI driver creates volumes automatically
+# WaitForFirstConsumer = volume created in same AZ as pod
+# ─────────────────────────────────────────────────────────────────
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer   # creates EBS in same AZ as pod
+reclaimPolicy: Retain                     # keep EBS volume if PVC deleted
+allowVolumeExpansion: true                # can grow volume without recreating
+parameters:
+  type: gp3
+  fsType: ext4
+  encrypted: "true"                       # EBS encryption at rest
+
+---
+# ─────────────────────────────────────────────────────────────────
+# PVC — MySQL persistent storage
+# EKS EBS CSI driver dynamically provisions a 5Gi EBS volume
+# ReadWriteOnce = only one node can mount (correct for MySQL)
+# ─────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: skillpulse
+  labels:
+    app: mysql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 5Gi

@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────
+# HPA — Horizontal Pod Autoscaler for backend
+# Scales between 2-4 pods based on CPU usage
+# Requires metrics-server (installed by default on EKS)
+# ─────────────────────────────────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: skillpulse
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60    # scale up when CPU > 60%
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70    # scale up when memory > 70%
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60     # wait 60s before scaling up
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300    # wait 5 mins before scaling down
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

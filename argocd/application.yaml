@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: skillpulse
+  namespace: argocd
+  labels:
+    app: skillpulse
+    env: prod
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Aliyas-22/github-actions-kubernetes-masterclass.git
+    targetRevision: feat-gitops
+    path: k8s                   # watches entire k8s/ folder
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: skillpulse
+  syncPolicy:
+    automated:
+      prune: true               # deletes resources removed from git
+      selfHeal: true            # reverts any manual kubectl changes
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

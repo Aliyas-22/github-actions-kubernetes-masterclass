@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: skillpulse-root
+  namespace: argocd
+  labels:
+    app: skillpulse
+    type: root
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Aliyas-22/github-actions-kubernetes-masterclass.git
+    targetRevision: feat-gitops
+    # watches the argocd/ folder — manages all child apps
+    path: argocd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

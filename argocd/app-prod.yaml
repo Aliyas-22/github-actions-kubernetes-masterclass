@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: skillpulse-prod
+  namespace: argocd
+  labels:
+    app: skillpulse
+    env: prod
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Aliyas-22/github-actions-kubernetes-masterclass.git
+    targetRevision: feat-gitops
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    # prod has NO automated sync — human must approve in ArgoCD UI
+    # this is the manual gate that protects production
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

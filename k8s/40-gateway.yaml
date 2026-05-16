@@ -1,0 +1,91 @@
+# ─────────────────────────────────────────────────────────────────
+# 1. GatewayClass — which controller handles Gateways
+# ─────────────────────────────────────────────────────────────────
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy-gateway
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+
+---
+# ─────────────────────────────────────────────────────────────────
+# 2. Gateway — creates AWS NLB with HTTP + HTTPS listeners
+#    After first apply: get NLB IP and replace skillpulse.nip.io
+#    with <NLB-IP>.nip.io
+# ─────────────────────────────────────────────────────────────────
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: skillpulse-gateway
+  namespace: skillpulse
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: skillpulse.nip.io    # UPDATE: replace with <NLB-IP>.nip.io
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: skillpulse-tls     # auto-created by cert-manager
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+---
+# ─────────────────────────────────────────────────────────────────
+# 3. HTTPRoute — routes all traffic through frontend
+#    frontend nginx handles /api/ proxy to backend internally
+# ─────────────────────────────────────────────────────────────────
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: skillpulse-route
+  namespace: skillpulse
+spec:
+  parentRefs:
+    - name: skillpulse-gateway
+      sectionName: http
+    - name: skillpulse-gateway
+      sectionName: https
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: frontend
+          port: 80
+
+---
+# ─────────────────────────────────────────────────────────────────
+# 4. BackendTrafficPolicy — cookie session persistence
+#    Ensures same user always hits same backend pod
+# ─────────────────────────────────────────────────────────────────
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: skillpulse-session
+  namespace: skillpulse
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: skillpulse-route
+  loadBalancer:
+    type: ConsistentHash
+    consistentHash:
+      type: Cookie
+      cookie:
+        name: SKILLPULSE_AFFINITY
+        ttl: 3600s

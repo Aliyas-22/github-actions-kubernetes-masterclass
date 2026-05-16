@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────
+# ServiceMonitor — tells Prometheus to scrape /metrics
+# label release: monitoring must match helm install name
+# ─────────────────────────────────────────────────────────────────
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: skillpulse-backend
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - skillpulse
+  selector:
+    matchLabels:
+      app: backend
+  endpoints:
+    - port: http-metrics
+      path: /metrics
+      interval: 15s
