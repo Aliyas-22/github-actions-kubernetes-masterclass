@@ -18,12 +18,14 @@ env:
 
 jobs:
 
-  # SECURITY STAGE (SAST + SECRETS + SCA) 
+  # SECURITY STAGE (SAST + SECRETS + SCA)
   security:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Secret scanning
       - name: Gitleaks Secret Scan
@@ -36,11 +38,11 @@ jobs:
           config: "p/ci"
         continue-on-error: false
 
-      # Setup Go (MATCHES YOUR PROJECT)
+      # Setup Go
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.26" 
+          go-version: "1.26"
 
       # Dependency + Vulnerability Scan (SCA)
       - name: Go Dependency Security Scan (govulncheck)
@@ -59,6 +61,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: docker/setup-buildx-action@v3
 
@@ -87,7 +91,6 @@ jobs:
           ignore-unfixed: true
 
 
-
   # FRONTEND BUILD + IMAGE SCAN
   frontend:
     needs: security
@@ -95,6 +98,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: docker/setup-buildx-action@v3
 
