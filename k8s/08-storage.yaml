@@ -1,7 +1,8 @@
 # ─────────────────────────────────────────────────────────────────
 # StorageClass — EBS gp3 dynamic provisioning
-# EKS EBS CSI driver creates volumes automatically
+# EKS EBS CSI driver creates EBS volumes automatically
 # WaitForFirstConsumer = volume created in same AZ as pod
+# No need to create PV manually — dynamic provisioning does it
 # ─────────────────────────────────────────────────────────────────
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -11,8 +12,8 @@ metadata:
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: ebs.csi.aws.com
 volumeBindingMode: WaitForFirstConsumer   # creates EBS in same AZ as pod
-reclaimPolicy: Retain                     # keep EBS volume if PVC deleted
-allowVolumeExpansion: true                # can grow volume without recreating
+reclaimPolicy: Retain                     # EBS volume survives PVC deletion
+allowVolumeExpansion: true                # can grow volume later
 parameters:
   type: gp3
   fsType: ext4
@@ -20,8 +21,9 @@ parameters:
 
 ---
 # ─────────────────────────────────────────────────────────────────
-# PVC — MySQL persistent storage
-# EKS EBS CSI driver dynamically provisions a 5Gi EBS volume
+# PVC — MySQL persistent storage (5Gi EBS gp3)
+# When mysql pod starts, EBS CSI driver creates a real AWS EBS
+# volume and attaches it to the node automatically
 # ReadWriteOnce = only one node can mount (correct for MySQL)
 # ─────────────────────────────────────────────────────────────────
 apiVersion: v1

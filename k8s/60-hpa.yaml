@@ -1,4 +1,4 @@
-# ─────────────────────────────────────────────────────────────────
+
 # HPA — Horizontal Pod Autoscaler for backend
 # Scales between 2-4 pods based on CPU usage
 # Requires metrics-server (installed by default on EKS)
