@@ -1,4 +1,3 @@
-# GatewayClass — wave -2 (infrastructure)
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -9,7 +8,6 @@ spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
 
 ---
-# Gateway — wave 1 (after namespace and services exist)
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -17,7 +15,6 @@ metadata:
   namespace: skillpulse
   annotations:
     argocd.argoproj.io/sync-wave: "1"
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   gatewayClassName: envoy-gateway
   listeners:
@@ -27,20 +24,8 @@ spec:
       allowedRoutes:
         namespaces:
           from: Same
-    - name: https
-      protocol: HTTPS
-      port: 443
-      hostname: a59bda6c1770848e3952364b6327d6ff-802082190.us-west-2.elb.amazonaws.com.nip.io    # UPDATE after cluster: <NLB-IP>.nip.io
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: skillpulse-tls
-      allowedRoutes:
-        namespaces:
-          from: Same
 
 ---
-# HTTPRoute — wave 1 (same wave as Gateway)
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -52,8 +37,6 @@ spec:
   parentRefs:
     - name: skillpulse-gateway
       sectionName: http
-    - name: skillpulse-gateway
-      sectionName: https
   rules:
     - matches:
         - path:
@@ -64,7 +47,6 @@ spec:
           port: 80
 
 ---
-# BackendTrafficPolicy — wave 1 (session persistence)
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
