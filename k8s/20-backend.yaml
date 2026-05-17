@@ -1,4 +1,4 @@
----
+# Service — wave 0 (networking, same wave as mysql)
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,22 +6,28 @@ metadata:
   namespace: skillpulse
   labels:
     app: backend
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   type: ClusterIP
   selector:
     app: backend
   ports:
-    - name: http-metrics        # ServiceMonitor uses this name
+    - name: http-metrics
       port: 8080
       targetPort: 8080
+
 ---
+# Deployment — wave 1 (application, runs AFTER mysql is healthy)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
   namespace: skillpulse
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
-  replicas: 1                   # HPA will scale this to 2-4
+  replicas: 1             # HPA will scale to 2-4
   selector:
     matchLabels:
       app: backend
@@ -33,7 +39,7 @@ spec:
       containers:
         - name: backend
           image: aliyafirdous22/skillpulse-backend
-          imagePullPolicy: Always   # always pull new SHA from DockerHub
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080

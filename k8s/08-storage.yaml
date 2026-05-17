@@ -1,31 +1,22 @@
-# ─────────────────────────────────────────────────────────────────
-# StorageClass — EBS gp3 dynamic provisioning
-# EKS EBS CSI driver creates EBS volumes automatically
-# WaitForFirstConsumer = volume created in same AZ as pod
-# No need to create PV manually — dynamic provisioning does it
-# ─────────────────────────────────────────────────────────────────
+# StorageClass — wave -2 (infrastructure, created first)
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: gp3
   annotations:
+    argocd.argoproj.io/sync-wave: "-2"
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: ebs.csi.aws.com
-volumeBindingMode: WaitForFirstConsumer   # creates EBS in same AZ as pod
-reclaimPolicy: Retain                     # EBS volume survives PVC deletion
-allowVolumeExpansion: true                # can grow volume later
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
 parameters:
   type: gp3
   fsType: ext4
-  encrypted: "true"                       # EBS encryption at rest
+  encrypted: "true"
 
 ---
-# ─────────────────────────────────────────────────────────────────
-# PVC — MySQL persistent storage (5Gi EBS gp3)
-# When mysql pod starts, EBS CSI driver creates a real AWS EBS
-# volume and attaches it to the node automatically
-# ReadWriteOnce = only one node can mount (correct for MySQL)
-# ─────────────────────────────────────────────────────────────────
+# PVC — wave -1 (configuration, after StorageClass exists)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -33,6 +24,8 @@ metadata:
   namespace: skillpulse
   labels:
     app: mysql
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   accessModes:
     - ReadWriteOnce

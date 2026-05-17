@@ -1,4 +1,4 @@
----
+# Service — wave 0 (database layer)
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,9 +6,11 @@ metadata:
   namespace: skillpulse
   labels:
     app: mysql
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   type: ClusterIP
-  clusterIP: None         # headless service for StatefulSet
+  clusterIP: None
   selector:
     app: mysql
   ports:
@@ -17,11 +19,14 @@ spec:
       targetPort: 3306
 
 ---
+# StatefulSet — wave 0 (database, runs after PVC and Secret exist)
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql
   namespace: skillpulse
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   serviceName: mysql
   replicas: 1
@@ -62,7 +67,7 @@ spec:
                   key: MYSQL_PASSWORD
           volumeMounts:
             - name: mysql-storage
-              mountPath: /var/lib/mysql    # mysql data directory
+              mountPath: /var/lib/mysql
           resources:
             requests:
               cpu: 250m
@@ -71,24 +76,15 @@ spec:
               memory: 512Mi
           livenessProbe:
             exec:
-              command:
-                - mysqladmin
-                - ping
-                - -h
-                - localhost
+              command: ["mysqladmin", "ping", "-h", "localhost"]
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             exec:
-              command:
-                - mysql
-                - -h
-                - localhost
-                - -e
-                - "SELECT 1"
+              command: ["mysql", "-h", "localhost", "-e", "SELECT 1"]
             initialDelaySeconds: 10
             periodSeconds: 5
       volumes:
         - name: mysql-storage
           persistentVolumeClaim:
-            claimName: mysql-pvc        # references 08-storage.yaml PVC
+            claimName: mysql-pvc

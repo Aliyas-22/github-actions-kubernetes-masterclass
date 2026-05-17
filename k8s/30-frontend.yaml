@@ -1,4 +1,4 @@
----
+# Service — wave 0 (networking)
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,21 +6,26 @@ metadata:
   namespace: skillpulse
   labels:
     app: frontend
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: frontend
   ports:
     - name: http
       port: 80
       targetPort: 80
-      nodePort: 30080
+
 ---
+# Deployment — wave 1 (application, same wave as backend)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
   namespace: skillpulse
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   replicas: 1
   selector:
@@ -34,25 +39,12 @@ spec:
       containers:
         - name: frontend
           image: aliyafirdous22/skillpulse-frontend
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
-            - name: http
-              containerPort: 80
+            - containerPort: 80
           resources:
             requests:
               cpu: 50m
               memory: 32Mi
             limits:
               memory: 64Mi
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 2
-            periodSeconds: 5

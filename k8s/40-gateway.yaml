@@ -1,25 +1,22 @@
-# ─────────────────────────────────────────────────────────────────
-# 1. GatewayClass — which controller handles Gateways
-# ─────────────────────────────────────────────────────────────────
+# GatewayClass — wave -2 (infrastructure)
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: envoy-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
 
 ---
-# ─────────────────────────────────────────────────────────────────
-# 2. Gateway — creates AWS NLB with HTTP + HTTPS listeners
-#    After first apply: get NLB IP and replace skillpulse.nip.io
-#    with <NLB-IP>.nip.io
-# ─────────────────────────────────────────────────────────────────
+# Gateway — wave 1 (after namespace and services exist)
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: skillpulse-gateway
   namespace: skillpulse
   annotations:
+    argocd.argoproj.io/sync-wave: "1"
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   gatewayClassName: envoy-gateway
@@ -33,25 +30,24 @@ spec:
     - name: https
       protocol: HTTPS
       port: 443
-      hostname: skillpulse.nip.io    # UPDATE: replace with <NLB-IP>.nip.io
+      hostname: skillpulse.nip.io    # UPDATE after cluster: <NLB-IP>.nip.io
       tls:
         mode: Terminate
         certificateRefs:
-          - name: skillpulse-tls     # auto-created by cert-manager
+          - name: skillpulse-tls
       allowedRoutes:
         namespaces:
           from: Same
 
 ---
-# ─────────────────────────────────────────────────────────────────
-# 3. HTTPRoute — routes all traffic through frontend
-#    frontend nginx handles /api/ proxy to backend internally
-# ─────────────────────────────────────────────────────────────────
+# HTTPRoute — wave 1 (same wave as Gateway)
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: skillpulse-route
   namespace: skillpulse
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   parentRefs:
     - name: skillpulse-gateway
@@ -68,15 +64,14 @@ spec:
           port: 80
 
 ---
-# ─────────────────────────────────────────────────────────────────
-# 4. BackendTrafficPolicy — cookie session persistence
-#    Ensures same user always hits same backend pod
-# ─────────────────────────────────────────────────────────────────
+# BackendTrafficPolicy — wave 1 (session persistence)
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
   name: skillpulse-session
   namespace: skillpulse
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   targetRefs:
     - group: gateway.networking.k8s.io

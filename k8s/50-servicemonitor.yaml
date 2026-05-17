@@ -1,7 +1,4 @@
-# ─────────────────────────────────────────────────────────────────
-# ServiceMonitor — tells Prometheus to scrape /metrics
-# label release: monitoring must match helm install name
-# ─────────────────────────────────────────────────────────────────
+# ServiceMonitor — wave 2 (after backend is running)
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -9,6 +6,8 @@ metadata:
   namespace: monitoring
   labels:
     release: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   namespaceSelector:
     matchNames:
