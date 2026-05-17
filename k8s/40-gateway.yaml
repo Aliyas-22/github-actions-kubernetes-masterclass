@@ -20,7 +20,7 @@ spec:
   listeners:
     - name: http
       protocol: HTTP
-      port: 8080
+      port: 80
       allowedRoutes:
         namespaces:
           from: Same
@@ -44,7 +44,7 @@ spec:
             value: /
       backendRefs:
         - name: frontend
-          port: 8080
+          port: 80
 
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
