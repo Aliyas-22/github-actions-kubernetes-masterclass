@@ -74,17 +74,19 @@ spec:
               memory: 256Mi
             limits:
               memory: 512Mi
-          livenessProbe:
-            exec:
-              command: ["mysqladmin", "ping", "-h", "localhost"]
-            initialDelaySeconds: 30
-            periodSeconds: 10
           readinessProbe:
             exec:
-              command: ["mysql", "-h", "localhost", "-e", "SELECT 1"]
+              command:
+                  - bash
+                  - -c
+                  - "mysql -h localhost -u root -p${MYSQL_ROOT_PASSWORD} -e 'SELECT 1'"
             initialDelaySeconds: 10
             periodSeconds: 5
-      volumes:
-        - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pvc
+          livenessProbe:
+            exec:
+              command:
+                  - bash
+                  - -c
+                  - "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}"
+            initialDelaySeconds: 30
+             periodSeconds: 10  
