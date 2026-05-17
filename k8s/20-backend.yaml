@@ -27,7 +27,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  replicas: 1             # HPA will scale to 2-4
+  replicas: 2             # HPA will scale to 2-4
   selector:
     matchLabels:
       app: backend

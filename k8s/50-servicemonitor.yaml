@@ -1,4 +1,3 @@
-# ServiceMonitor — wave 2 (after backend is running)
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -16,6 +15,6 @@ spec:
     matchLabels:
       app: backend
   endpoints:
-    - port: http-metrics
+    - port: http
       path: /metrics
       interval: 15s
