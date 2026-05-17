@@ -1,4 +1,4 @@
-# Service — wave 0 (networking)
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,10 +15,9 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 80
+      targetPort: 8080    # nginx-unprivileged runs on 8080
 
 ---
-# Deployment — wave 1 (application, same wave as backend)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -41,7 +40,7 @@ spec:
           image: aliyafirdous22/skillpulse-frontend
           imagePullPolicy: Always
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           resources:
             requests:
               cpu: 50m
