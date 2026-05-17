@@ -30,7 +30,7 @@ spec:
     - name: https
       protocol: HTTPS
       port: 443
-      hostname: skillpulse.nip.io    # UPDATE after cluster: <NLB-IP>.nip.io
+      hostname: a59bda6c1770848e3952364b6327d6ff-802082190.us-west-2.elb.amazonaws.com.nip.io    # UPDATE after cluster: <NLB-IP>.nip.io
       tls:
         mode: Terminate
         certificateRefs:
