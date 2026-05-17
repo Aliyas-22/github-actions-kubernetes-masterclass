@@ -88,12 +88,7 @@ spec:
                 - "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}"
             initialDelaySeconds: 30
             periodSeconds: 10
-  volumeClaimTemplates:
-    - metadata:
-        name: mysql-storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: gp3
-        resources:
-          requests:
-            storage: 5Gi
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
